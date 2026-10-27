@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akubishin's Web Site</title>
+    <style>
+        /* --- 1. 基本設定と変数 --- */
+        :root {
+            --primary-color: #4A90E2;
+            --dark-color: #333;
+            --bg-color: #f0f2f5;
+            --transition-speed: 0.4s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- ロード画面のスタイル --- */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-weight: bold;
+            color: var(--dark-color);
+            letter-spacing: 1px;
+        }
+
+        #loader.loaded {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* --- 2. アニメーション関連 --- */
+        .anim-fade { animation: fade 1s ease forwards; }
+        .anim-slide-up { animation: slideUp 0.8s ease-out forwards; }
+        .anim-zoom { animation: zoomIn 0.6s ease forwards; }
+
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- 3. ヘッダー --- */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 70px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-title-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            transition: transform 0.4s ease;
+        }
+        .header-logo:hover {
+            transform: rotate(360deg);
+        }
+
+        /* --- フォローボタンのスタイル --- */
+        .follow-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            color: var(--dark-color);
+            padding: 10px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s, color 0.2s;
+        }
+        .follow-btn:hover {
+            transform: scale(1.08);
+            background: var(--dark-color);
+            color: white;
+        }
+        .follow-btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* --- 4. メニュー --- */
+        .menu-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--dark-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: background 0.3s, transform 0.2s;
+        }
+        .menu-toggle-btn:hover {
+            background: var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 250px;
+            height: 100%;
+            background: rgba(51, 51, 51, 0.98);
+            backdrop-filter: blur(5px);
+            transition: right 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+            z-index: 999;
+            padding-top: 80px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+
+        nav.open { right: 0; }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 15px 25px;
+            border-bottom: 1px solid #444;
+            transition: background 0.3s, padding-left 0.3s;
+        }
+
+        nav a:hover { 
+            background: var(--primary-color); 
+            padding-left: 32px;
+        }
+
+        /* --- 5. コンテンツ --- */
+        .section-box {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .section-box:hover {
+            transform: translateY(-3px);
+        }
+
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+        }
+
+        .content-img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        /* --- Scratch用スタイル --- */
+        .scratch-embed { border: none; max-width: 100%; width: 485px; height: 402px; border-radius: 8px; margin-bottom: 10px; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .scratch-btn { display: inline-block; margin-top: 8px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .scratch-btn:hover { transform: scale(1.08); }
+        .scratch-btn-img { width: 160px; height: auto; border-radius: 6px; display: block; }
+
+        /* --- シリーズの枠スタイル --- */
+        .series-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 10px;
+            border: 2px dashed #4A90E2;
+            transition: all 0.3s ease;
+        }
+        .series-box:hover {
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+        }
+
+        /* --- 作品のリストスタイル --- */
+        .deep-item-box {
+            margin: 15px 0 15px 20px;
+            padding: 18px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #4A90E2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .deep-item-box:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* --- 6. 戻るボタン --- */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .back-to-top:hover { 
+            transform: scale(1.15) translateY(-3px); 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ロード画面 -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading Akubishin's World...</div>
+    </div>
+
+    <!-- ヘッダー -->
+    <header class="anim-zoom">
+        <div class="header-title-container">
+            <img src="Icon.png" alt="Logo" class="header-logo">
+            <h1 id="main-title">My Official Site</h1>
+        </div>
+        <p class="anim-fade" style="animation-delay: 0.3s;">Welcome to Akubishin's Project</p>
+        
+        <!-- 追加したフォローボタン (hrefをご自身のScratchプロフィールURLに変更してください) -->
+        <a href="https://scratch.mit.edu/users/Akubishin/" target="_blank" class="follow-btn anim-fade" style="animation-delay: 0.6s;">
+            <img src="Icon.png" alt="" class="follow-btn-icon">
+            <span>Akubishinをフォロー</span>
+        </a>
+    </header>
+
+    <button class="menu-toggle-btn" onclick="toggleMenu()">MENU ☰</button>
+
+    <nav id="navbar"></nav>
+
+    <main id="content-zone"></main>
+
+    <a href="#" class="back-to-top" id="backToTopBtn">↑</a>
+
+    <script>
+        // ロード画面の処理
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("loader");
+            setTimeout(() => {
+                loader.classList.add("loaded");
+            }, 400);
+        });
+
+        document.getElementById("main-title").textContent = "Akubishinのプロフィール";
+
+        const myPages = [
+            { 
+                title: "ScratchでのAkubishin", 
+                icon: "user-icon.png",
+                text: "皆さんお久しぶりです！Akubishinです！<br>これより、Javascriptを使っての活動を開始します！！！",
+                image: "intro-main.jpg",
+                
+                seriesList: [
+                    {
+                        name: "ただ攻撃をよけるゲーム",
+                        description: "僕が作った自慢の弾幕ゲームたちです！",
+                        items: [
+                            { name: "ただ攻撃をよけるゲーム<br> スーパーハード", description: "最初の作品です。クリアできるかな？", url: "https://scratch.mit.edu/projects/1278540791", id: "1278540791" },
+                            { name: "ただ攻撃をよけるゲームSUPER", description: "2作目！ギミックが増えました。", url: "https://scratch.mit.edu/projects/1280637676/", id: "1280637676" }
+                        ]
+                    },
+                    {
+                        name: "アニメNIGHTMARE",
+                        description: "僕のアニメのシリーズ一作目です。最近なんか投稿されてないのは気にしないでね",
+                        items: [
+                            { name: "第零話", description: "かっこよく作れたアニメーションです。", url: "https://scratch.mit.edu/projects/1304600288/", id: "1304600288" }
+                        ]
+                    },
+                    {
+                        name: "アニメ修繕～The.Repair～",
+                        description: "僕のアニメシリーズ3作目です！",
+                        items: [
+                            { name: "第一話", description: "初回です！結構クオリティは低いですね()", url: "https://scratch.mit.edu/projects/1381275824/", id: "1381275824" }
+                        ]
+                    }
+                ],
+                
+                singleProjects: [
+                    { name: "単独作品の例1", description: "お絵描きツールです。だいぶ初期のころに作ったやつでバグも多いです。", url: "https://scratch.mit.edu/projects/1278544292/", id: "1278544292" },
+                    { name: "単独作品の例2", description: "初めて結構本格的にゲームを作りました。", url: "https://scratch.mit.edu/projects/1291014567/", id: "1291014567" }
+                ]
+            },
+            { 
+                title: "AkubishinのJava作品", 
+                icon: "work-icon.png",
+                text: "まだこのWebページ以外ありません。<br>これからにご期待ください！",
+                image: "gallery.jpg",
+                seriesList: [], singleProjects: []
+            }
+        ];
+
+        const nav = document.getElementById("navbar");
+        const contentZone = document.getElementById("content-zone");
+
+        myPages.forEach((page, index) => {
+            const link = document.createElement("a");
+            link.href = "#section-" + index;
+            link.textContent = page.title;
+            link.onclick = toggleMenu; 
+            nav.appendChild(link);
+
+            const box = document.createElement("div");
+            box.id = "section-" + index;
+            box.className = "section-box scroll-reveal";
+
+            let html = `
+                <div class="section-title-wrap">
+                    <img src="${page.icon}" alt="" class="section-icon">
+                    <h2>${page.title}</h2>
+                </div>
+                <p>${page.text}</p>
+            `;
+
+            if (page.seriesList && page.seriesList.length > 0) {
+                page.seriesList.forEach(series => {
+                    html += `
+                        <div class="series-box">
+                            <h3 style="color: #4A90E2; margin-top: 0; margin-bottom: 5px;">◆ ${series.name}</h3>
+                            <p style="margin-top: 0; margin-bottom: 15px; color: #666; font-size: 0.95em;">${series.description}</p>
+                    `;
+                    
+                    if (series.items && series.items.length > 0) {
+                        series.items.forEach(item => {
+                            html += `
+                                <div class="deep-item-box">
+                                    <strong style="color: #333; font-size: 1.1em;">・${item.name}</strong>
+                                    <p style="margin: 5px 0 10px 0; font-size: 0.95em; color: #666;">${item.description}</p>
+                            `;
+                            
+                            if (item.id) {
+                                let embedUrl = `https://scratch.mit.edu/projects/${item.id}/embed`;
+                                if (series.name === "アニメNIGHTMARE") {
+                                    embedUrl = `https://turbowarp.org/${item.id}/embed`;
+                                }
+
+                                html += `
+                                    <iframe src="${embedUrl}" allowtransparency="true" class="scratch-embed" allowfullscreen></iframe>
+                                `;
+                            }
+
+                            html += `
+                                    <a href="${item.url}" target="_blank" class="scratch-btn">
+                                        <img src="costume1 (1).svg" alt="Scratchで見る" class="scratch-btn-img">
+                                    </a>
+                                </div>
+                            `;
+                        });
+                    }
+                    html += `</div>`;
+                });
+            }
+
+            if (page.singleProjects && page.singleProjects.length > 0) {
+                html += `<h3 style="color: #333; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">◆ その他の単独作品</h3>`;
+                page.singleProjects.forEach(item => {
+                    html += `
+                        <div class="deep-item-box" style="border-left-color: #555;">
+                            <strong style="color: #333; font-size: 1.1em;">・${item.name}</strong>
+                            <p style="margin: 5px 0 10px 0; font-size: 0.95em; color: #666;">${item.description}</p>
+                    `;
+
+                    if (item.id) {
+                        html += `
+                            <iframe src="https://scratch.mit.edu/projects/${item.id}/embed" allowtransparency="true" class="scratch-embed" allowfullscreen></iframe>
+                        `;
+                    }
+
+                    html += `
+                            <a href="${item.url}" target="_blank" class="scratch-btn">
+                                <img src="costume1 (1).svg" alt="Scratchで見る" class="scratch-btn-img">
+                            </a>
+                        </div>
+                    `;
+                });
+            }
+
+            if(page.image) { html += `<img src="${page.image}" alt="" class="content-img">`; }
+            box.innerHTML = html;
+            contentZone.appendChild(box);
+        });
+
+        function toggleMenu() {
+            document.getElementById("navbar").classList.toggle("open");
+        }
+
+        const scrollRevealElements = document.querySelectorAll('.scroll-reveal');
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        function checkScroll() {
+            const triggerBottom = window.innerHeight * 0.85;
+
+            scrollRevealElements.forEach(box => {
+                const boxTop = box.getBoundingClientRect().top;
+                if (boxTop < triggerBottom) {
+                    box.classList.add('active');
+                }
+            });
+
+            if (window.scrollY > 300) {
+                backToTopBtn.classList.add('show');
+            } else {
+                backToTopBtn.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('scroll', checkScroll);
+        window.addEventListener('DOMContentLoaded', checkScroll);
+    </script>
+
+</body>
+</html>
